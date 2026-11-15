@@ -1,0 +1,28 @@
+# Ground truth on a tiny instance: every error enumerated, full 2^n output distribution, true optimum
+name = "small-exact"
+seeds = [0, 1, 2]
+
+[problem]
+name = "xorsat-regular"
+n = 18
+k = 3
+D = 6
+
+[dqi]
+ell = 3
+weights = {name = "optimal-ideal"}
+decoder = {name = "bp"}
+
+[[evaluators]]
+name = "exact"
+shots = 100
+
+[[evaluators]]
+name = "mc"
+samples = 400
+
+[[baselines]]
+name = "exact"
+
+[sweep]
+"dqi.decoder" = ["ml", "bposd", "bp", "bitflip"]

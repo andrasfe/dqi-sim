@@ -1,0 +1,29 @@
+# Which classical decoder buys DQI the most? BP vs BP-OSD vs bit flipping on Gallager (3,6), n=400
+name = "decoder-shootout"
+seeds = [0, 1]
+
+[problem]
+name = "xorsat-regular"
+n = 400
+k = 3
+D = 6
+
+[dqi]
+ell = 0.12
+weights = {name = "optimal-aware"}
+decoder = {name = "bp"}
+
+[[evaluators]]
+name = "mc"
+samples = 150
+k_points = 16
+
+[[baselines]]
+name = "sa"
+sweeps = 500
+
+[[baselines]]
+name = "walksat"
+
+[sweep]
+"dqi.decoder" = ["bitflip", "bp:iters=50", "bp:iters=50,mode=sumproduct", "bposd:iters=20"]

@@ -1,0 +1,25 @@
+# Polynomial variants: paper's eigenvector vs decoder-aware optimum vs Gibbs-like product vs single shell
+name = "weights-shootout"
+seeds = [0, 1]
+
+[problem]
+name = "xorsat-regular"
+n = 300
+k = 3
+D = 6
+
+[dqi]
+ell = 0.15
+weights = {name = "optimal-ideal"}
+decoder = {name = "bp", iters = 40}
+
+[[evaluators]]
+name = "mc"
+samples = 150
+k_points = 16
+
+[[evaluators]]
+name = "ideal"
+
+[sweep]
+"dqi.weights" = ["optimal-ideal", "optimal-aware", "product:t=0.2", "product:t=0.35", "single", "uniform"]

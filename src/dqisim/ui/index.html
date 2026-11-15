@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DQI Simulator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%233557c9'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f7f7f5;--panel:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#3557c9;--accent-ink:#fff;--ok:#2f7d4f;--bad:#b23a3a;--warn:#a86b00;
+--s1:#3557c9;--s2:#d0702a;--s3:#2f8f6f;--s4:#a0459a;--s5:#7a7a2a;--s6:#c23b5a;--s7:#4a90a8;--s8:#6b5bd1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--panel:#1e1e1c;--ink:#ecebe6;--muted:#9a9993;--line:#34332f;--accent:#7f9bff;--accent-ink:#0d0d0c;--ok:#5fbf86;--bad:#e07272;--warn:#e0a640;
+--s1:#7f9bff;--s2:#f09a55;--s3:#5cc8a2;--s4:#d07fca;--s5:#c4c46a;--s6:#f07f98;--s7:#7cc3db;--s8:#a597ff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:16px;margin:0;font-weight:650}
+header .sub{color:var(--muted);font-size:12px}
+header .sys{margin-left:auto;font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;padding:16px;max-width:1500px;margin:0 auto}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+section.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px;font-weight:600}
+h3{font-size:14px;margin:0;font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.field{display:flex;flex-direction:column;gap:2px;min-width:110px;flex:1 1 110px}
+.field label{font-size:11px;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;width:100%}
+input[type=checkbox]{width:auto}
+textarea{font:12px ui-monospace,Menlo,monospace;min-height:120px}
+button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.small{padding:2px 8px;font-size:12px}
+button:hover{filter:brightness(1.05)}
+.comp{border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:8px}
+.comp .head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.comp .head select{max-width:220px}
+.help{color:var(--muted);font-size:12px;margin:2px 0 6px}
+.stage{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:start;margin-top:8px}
+.stage>.lbl{font-size:12px;font-weight:600;padding-top:8px}
+@media (max-width:520px){.stage{grid-template-columns:1fr}}
+.pipeline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:4px}
+.pipeline b{color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:1px 8px;font-weight:500}
+.jobs{max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.job{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;border-bottom:1px solid var(--line);cursor:pointer;font:12px ui-monospace,Menlo,monospace}
+.job:hover,.job.sel{background:var(--bg)}
+.st-done{color:var(--ok)}.st-failed,.st-aborted{color:var(--bad)}.st-running,.st-queued{color:var(--warn)}.st-cancelled{color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0}
+.bar>div{height:100%;background:var(--accent)}
+table{border-collapse:collapse;width:100%;font:12px ui-monospace,Menlo,monospace}
+th,td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+.tablewrap{overflow-x:auto}
+.msg{font-size:12px;margin-top:6px;white-space:pre-wrap}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+pre{font:11px ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;overflow:auto;max-height:220px;margin:6px 0 0}
+.metrics{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;margin:6px 0}
+.metrics label{display:flex;gap:4px;align-items:center}
+svg text{fill:var(--muted);font:11px ui-sans-serif,system-ui,sans-serif}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font:12px ui-monospace,Menlo,monospace}
+.kv span:nth-child(odd){color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>DQI Simulator</h1><div class="sub">Decoded Quantum Interferometry variants: decoder-in-the-loop, resource-safe</div></div>
+  <div class="sys" id="sys">…</div>
+</header>
+<main>
+<div>
+  <section class="card">
+    <h2>Experiment</h2>
+    <div class="row">
+      <div class="field"><label>Preset</label><select id="preset"></select></div>
+      <div class="field"><label>Name</label><input id="name"></div>
+      <div class="field"><label>Seeds ("0", "0,1,2" or range "0-9")</label><input id="seeds"></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Architecture</h2>
+    <div class="pipeline" id="pipeline"></div>
+    <div id="stages"></div>
+    <div class="stage"><div class="lbl">DQI</div><div class="row" id="dqi"></div></div>
+  </section>
+  <section class="card"><h2>Evaluators</h2><div id="evaluators"></div><button class="small" id="addEval">+ evaluator</button></section>
+  <section class="card"><h2>Classical baselines</h2><div id="baselines"></div><button class="small" id="addBase">+ baseline</button></section>
+  <section class="card">
+    <h2>Sweep</h2>
+    <div class="help">Cartesian product. Any dotted path works. Component values use “|” (e.g. <code>bp:iters=10|bposd</code>); others use commas.</div>
+    <div id="sweep"></div><button class="small" id="addSweep">+ sweep axis</button>
+    <datalist id="paths"></datalist>
+  </section>
+  <section class="card">
+    <h2>Resources</h2>
+    <div class="row" id="resources"></div>
+    <div class="help">Jobs always run at nice 19 with background I/O priority, capped threads, a memory watchdog, and disk and wall-time limits.</div>
+  </section>
+  <section class="card">
+    <div class="row">
+      <button id="validate">Validate</button>
+      <button class="primary" id="run">Run</button>
+      <button id="download">Download spec</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <pre id="toml" hidden></pre>
+  </section>
+</div>
+<div>
+  <section class="card">
+    <h2>Runs</h2>
+    <div class="jobs" id="jobs"></div>
+  </section>
+  <section class="card" id="detail" hidden>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 id="dTitle"></h3>
+      <div><button class="small" id="dLoad">Load spec</button> <button class="small" id="dCancel">Cancel</button></div>
+    </div>
+    <div class="bar"><div id="dBar" style="width:0"></div></div>
+    <div class="kv" id="dKv"></div>
+    <div id="chartBox">
+      <div class="row" style="margin-top:10px">
+        <div class="field"><label>x axis</label><select id="xKey"></select></div>
+      </div>
+      <div class="metrics" id="metricPick"></div>
+      <div id="chart"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="tablewrap" style="margin-top:8px"><table id="dTable"></table></div>
+    <pre id="dLog"></pre>
+  </section>
+</div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === 'on') for (const [ev, f] of Object.entries(v)) e.addEventListener(ev, f); else if (k === 'text') e.textContent = v; else if (v !== undefined && v !== null && v !== false) e.setAttribute(k, v === true ? '' : v); }
+  kids.flat().forEach(c => c != null && e.append(c)); return e; };
+let CAT = null, spec = null, current = null, chosenMetrics = null;
+const COMPONENT_PATHS = {'problem': 'problem', 'dqi.weights': 'weights', 'dqi.decoder': 'decoder'};
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)} : {});
+  const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j;
+}
+const comps = kind => CAT.components[kind];
+const compDef = (kind, name) => comps(kind).find(c => c.name === name);
+function defaults(kind, name) { const d = {name}; (compDef(kind, name)?.params || []).forEach(p => d[p.name] = p.default); return d; }
+
+function paramField(p, obj, onchange) {
+  const id = 'f' + Math.random().toString(36).slice(2);
+  let input, val = obj[p.name] ?? p.default;
+  if (p.type === 'bool') input = el('input', {type: 'checkbox', id, checked: !!val, on: {change: e => { obj[p.name] = e.target.checked; onchange(); }}});
+  else if (p.choices) { input = el('select', {id, on: {change: e => { obj[p.name] = e.target.value; onchange(); }}}, p.choices.map(c => el('option', {value: c, selected: c === val, text: c}))); }
+  else {
+    const num = p.type === 'int' || p.type === 'float';
+    input = el('input', {id, type: num ? 'number' : 'text', step: p.type === 'int' ? 1 : 'any', min: p.min, max: p.max,
+      value: Array.isArray(val) ? val.join(',') : val,
+      on: {change: e => { const v = e.target.value; obj[p.name] = p.type === 'int' ? parseInt(v) : p.type === 'float' ? parseFloat(v) : p.type === 'list[float]' ? v.split(/[,;]/).filter(x => x.trim()).map(Number) : coerce(v); onchange(); }}});
+  }
+  return el('div', {class: 'field', title: p.help}, el('label', {for: id, text: p.name}), input);
+}
+function coerce(v) { if (v === 'true') return true; if (v === 'false') return false; if (v !== '' && !isNaN(Number(v))) return Number(v); return v; }
+
+function compEditor(kind, obj, onReplace, onRemove) {
+  const def = compDef(kind, obj.name);
+  const sel = el('select', {on: {change: e => onReplace(defaults(kind, e.target.value))}}, comps(kind).map(c => el('option', {value: c.name, selected: c.name === obj.name, text: c.name})));
+  const head = el('div', {class: 'head'}, sel, el('div', {class: 'help', style: 'margin:0;flex:1', text: def ? def.help : 'unknown component'}), onRemove ? el('button', {class: 'small', text: '✕', title: 'remove', on: {click: onRemove}}) : null);
+  const params = el('div', {class: 'row'}, (def?.params || []).map(p => paramField(p, obj, renderPipeline)));
+  return el('div', {class: 'comp'}, head, params);
+}
+
+function render() {
+  $('#name').value = spec.name || '';
+  $('#seeds').value = Array.isArray(spec.seeds) ? spec.seeds.join(',') : (typeof spec.seeds === 'number' ? `0-${spec.seeds - 1}` : spec.seeds);
+  const st = $('#stages'); st.replaceChildren();
+  const stage = (label, kind, get, set) => st.append(el('div', {class: 'stage'}, el('div', {class: 'lbl', text: label}), compEditor(kind, get(), o => { set(o); render(); })));
+  stage('Problem', 'problem', () => spec.problem, o => spec.problem = o);
+  stage('Weights P(f)', 'weights', () => spec.dqi.weights, o => spec.dqi.weights = o);
+  stage('Decoder', 'decoder', () => spec.dqi.decoder, o => spec.dqi.decoder = o);
+  const dqiParams = [
+    {name: 'ell', type: 'int|float|str', default: 'auto', help: 'max degree ℓ: integer, fraction of m in (0,1), or auto (decoder radius probe)'},
+    {name: 'postselect', type: 'bool', default: true, help: 'post-select on a clean error register (paper); off = keep failed branches'},
+    {name: 'ell_auto_eps', type: 'float', default: 0.1, help: 'auto ℓ: largest k with decoder failure ≤ this'}];
+  $('#dqi').replaceChildren(...dqiParams.map(p => paramField(p, spec.dqi, renderPipeline)));
+  for (const [key, kind, box] of [['evaluators', 'evaluator', '#evaluators'], ['baselines', 'baseline', '#baselines']]) {
+    $(box).replaceChildren(...(spec[key] || []).map((c, i) => compEditor(kind, c, o => { spec[key][i] = o; render(); }, () => { spec[key].splice(i, 1); render(); })));
+  }
+  const sw = $('#sweep'); sw.replaceChildren();
+  Object.entries(spec.sweep || {}).forEach(([path, vals], i) => {
+    const isComp = path in COMPONENT_PATHS || path === 'evaluators' || path === 'baselines';
+    const txt = (vals || []).map(v => typeof v === 'object' ? toShort(v) : v).join(isComp ? '|' : ',');
+    let curPath = path;
+    const pIn = el('input', {list: 'paths', value: path, on: {change: e => { const v = spec.sweep[curPath]; delete spec.sweep[curPath]; curPath = e.target.value; spec.sweep[curPath] = v; render(); }}});
+    const vIn = el('input', {value: txt, on: {change: e => { spec.sweep[curPath] = splitVals(curPath, e.target.value); renderPipeline(); }}});
+    sw.append(el('div', {class: 'row', style: 'margin-bottom:6px'}, el('div', {class: 'field', style: 'flex:1 1 160px'}, el('label', {text: 'path'}), pIn),
+      el('div', {class: 'field', style: 'flex:2 1 220px'}, el('label', {text: 'values'}), vIn), el('button', {class: 'small', text: '✕', on: {click: () => { delete spec.sweep[curPath]; render(); }}})));
+  });
+  const res = spec.resources = spec.resources || {};
+  const B = CAT.budget;
+  $('#resources').replaceChildren(...[
+    {name: 'memory_gb', type: 'float', default: B.memory_gb, help: 'per-process RSS cap (watchdog kills above)'},
+    {name: 'walltime_s', type: 'float', default: B.walltime_s, help: 'per-job wall-time budget'},
+    {name: 'workers', type: 'int', default: 1, min: 1, max: 2, help: 'worker processes (hard cap 2)'},
+    {name: 'threads', type: 'int', default: B.threads, min: 1, max: 4, help: 'BLAS/numba threads per process (hard cap 4)'},
+    {name: 'min_free_mem_gb', type: 'float', default: B.min_free_mem_gb, help: 'pause/abort if system free memory drops below'},
+    {name: 'results_cap_mb', type: 'float', default: B.results_cap_mb, help: 'cap on total results directory size'},
+  ].map(p => paramField(p, res, () => {})));
+  renderPipeline();
+  const dl = $('#paths'); dl.replaceChildren(...suggestPaths().map(p => el('option', {value: p})));
+}
+function toShort(c) { const {name, label, ...rest} = c; const kv = Object.entries(rest).map(([k, v]) => `${k}=${Array.isArray(v) ? v.join(';') : v}`); return kv.length ? `${name}:${kv.join(',')}` : name; }
+function splitVals(path, s) { const isComp = path in COMPONENT_PATHS || path === 'evaluators' || path === 'baselines'; return isComp ? s.split('|').map(x => x.trim()).filter(Boolean) : s.split(',').map(x => x.trim()).filter(x => x !== '').map(coerce); }
+function suggestPaths() {
+  const out = ['problem', 'dqi.decoder', 'dqi.weights', 'dqi.ell', 'dqi.postselect', 'dqi.ell_auto_eps'];
+  (compDef('problem', spec.problem.name)?.params || []).forEach(p => out.push('problem.' + p.name));
+  (compDef('decoder', spec.dqi.decoder.name)?.params || []).forEach(p => out.push('dqi.decoder.' + p.name));
+  (compDef('weights', spec.dqi.weights.name)?.params || []).forEach(p => out.push('dqi.weights.' + p.name));
+  (spec.evaluators || []).forEach((e, i) => (compDef('evaluator', e.name)?.params || []).forEach(p => out.push(`evaluators.${i}.${p.name}`)));
+  (spec.baselines || []).forEach((e, i) => (compDef('baseline', e.name)?.params || []).forEach(p => out.push(`baselines.${i}.${p.name}`)));
+  return out;
+}
+function renderPipeline() {
+  const b = t => el('b', {text: t});
+  $('#pipeline').replaceChildren(b(toShort(spec.problem)), ' → QFT → ', b(toShort(spec.dqi.weights)), ' → ', b(toShort(spec.dqi.decoder)), ` → ℓ=${spec.dqi.ell}${spec.dqi.postselect === false ? ', no post-selection' : ''}`);
+}
+function collect() {
+  spec.name = $('#name').value || 'ui';
+  const s = $('#seeds').value.trim();
+  spec.seeds = s;
+  const r = spec.resources || {}; for (const k of Object.keys(r)) if (r[k] === '' || r[k] === null || (typeof r[k] === 'number' && isNaN(r[k]))) delete r[k];
+  return spec;
+}
+function msg(t, cls) { const m = $('#msg'); m.textContent = t; m.className = 'msg ' + (cls || ''); }
+
+async function loadPreset(name) { spec = name ? await api('/api/preset/' + name) : structuredClone(CAT.default); spec.sweep = spec.sweep || {}; spec.resources = spec.resources || {}; render(); }
+
+$('#validate').onclick = async () => { try { const r = await api('/api/validate', collect()); msg(`OK: ${r.points} point-seeds`, 'ok'); const t = $('#toml'); t.hidden = false; t.textContent = '# save as spec.toml, then: dqisim run spec.toml\n' + r.toml; } catch (e) { msg(e.message, 'err'); } };
+$('#run').onclick = async () => { try { const r = await api('/api/run', collect()); msg('queued ' + r.job, 'ok'); await refreshJobs(); select(r.job); } catch (e) { msg(e.message, 'err'); } };
+$('#download').onclick = () => { const a = el('a', {href: URL.createObjectURL(new Blob([JSON.stringify(collect(), null, 2)], {type: 'application/json'})), download: (spec.name || 'spec') + '.json'}); a.click(); };
+$('#addEval').onclick = () => { spec.evaluators = spec.evaluators || []; spec.evaluators.push(defaults('evaluator', 'mc')); render(); };
+$('#addBase').onclick = () => { spec.baselines = spec.baselines || []; spec.baselines.push(defaults('baseline', 'sa')); render(); };
+$('#addSweep').onclick = () => { spec.sweep = spec.sweep || {}; let p = 'dqi.ell'; let i = 1; while (p in spec.sweep) p = 'problem.n' + (i++ > 1 ? i : ''); spec.sweep[p] = []; render(); };
+$('#preset').onchange = e => loadPreset(e.target.value);
+
+async function refreshJobs() {
+  const jobs = await api('/api/jobs');
+  $('#jobs').replaceChildren(...(jobs.length ? jobs.map(j => el('div', {class: 'job' + (j.id === current ? ' sel' : ''), on: {click: () => select(j.id)}},
+    el('span', {text: j.id}), el('span', {class: 'st-' + j.state, text: `${j.state}${j.total ? ` ${j.done}/${j.total}` : ''}`}))) : [el('div', {class: 'job', text: 'no runs yet'})]));
+}
+async function select(id) { current = id; chosenMetrics = null; await refreshDetail(); refreshJobs(); }
+async function refreshDetail() {
+  if (!current) return;
+  const d = await api('/api/jobs/' + current);
+  $('#detail').hidden = false;
+  const st = d.status || {};
+  $('#dTitle').textContent = d.id;
+  $('#dBar').style.width = (st.total ? 100 * st.done / st.total : 0) + '%';
+  const sf = st.safety || {};
+  const kv = [['state', st.state + (st.reason ? ` (${st.reason})` : '')], ['progress', `${st.done ?? 0}/${st.total ?? '?'}`], ['nice', sf.nice], ['threads', sf.threads_env],
+    ['peak RSS', st.peak_rss_mb != null ? st.peak_rss_mb + ' MB' : ''], ['load avg', (sf.load_avg || []).join(' ')], ['paused for load', (sf.paused_s ?? 0) + ' s'],
+    ['elapsed', st.started ? Math.round(((st.finished || Date.now() / 1000) - st.started)) + ' s' : '']];
+  $('#dKv').replaceChildren(...kv.flatMap(([k, v]) => [el('span', {text: k}), el('span', {text: v ?? ''})]));
+  $('#dCancel').hidden = !['running', 'queued'].includes(st.state);
+  $('#dCancel').onclick = async () => { await api(`/api/jobs/${current}/cancel`, {}); refreshDetail(); };
+  $('#dLoad').onclick = () => { spec = d.spec; spec.sweep = spec.sweep || {}; render(); msg('loaded spec from ' + d.id, 'ok'); };
+  $('#dLog').textContent = d.log_tail || '';
+  $('#dLog').hidden = !d.log_tail;
+  renderSummary(d.summary || []);
+}
+function renderSummary(summ) {
+  const tbl = $('#dTable');
+  if (!summ.length) { tbl.replaceChildren(); $('#chartBox').hidden = true; return; }
+  const ovKeys = [...new Set(summ.flatMap(s => Object.keys(s.overrides)))];
+  const allMetrics = [...new Set(summ.flatMap(s => Object.keys(s.stats)))].sort();
+  const mainMetrics = allMetrics.filter(k => k.endsWith('.frac'));
+  if (!chosenMetrics) chosenMetrics = new Set(mainMetrics);
+  const head = el('tr', {}, [...ovKeys, 'seeds', ...[...chosenMetrics]].map(h => el('th', {text: h.replace('evaluator:', '').replace('baseline:', 'B:')})));
+  const rows = summ.map(s => el('tr', {}, ...ovKeys.map(k => el('td', {text: fmtOv(s.overrides[k])})), el('td', {text: s.seeds}),
+    ...[...chosenMetrics].map(k => { const v = s.stats[k]; return el('td', {text: v ? v.mean.toFixed(4) + (v.n > 1 ? ' ±' + v.se.toFixed(4) : '') : ''}); })));
+  const errs = [...new Set(summ.flatMap(s => s.errors))];
+  tbl.replaceChildren(head, ...rows, ...errs.map(e => el('tr', {}, el('td', {colspan: 99, class: 'st-failed', style: 'text-align:left;white-space:normal', text: '!! ' + e}))));
+  $('#chartBox').hidden = false;
+  const xs = $('#xKey'); const prev = xs.value;
+  xs.replaceChildren(...[...ovKeys, 'point'].map(k => el('option', {value: k, text: k, selected: k === prev})));
+  xs.onchange = () => drawChart(summ, ovKeys, xs.value);
+  $('#metricPick').replaceChildren(...allMetrics.filter(k => !k.endsWith('time_s')).map(k => el('label', {}, el('input', {type: 'checkbox', checked: chosenMetrics.has(k), on: {change: e => { e.target.checked ? chosenMetrics.add(k) : chosenMetrics.delete(k); renderSummary(summ); }}}), k.replace('evaluator:', '').replace('baseline:', 'B:'))));
+  drawChart(summ, ovKeys, xs.value || ovKeys[0] || 'point');
+}
+const fmtOv = v => typeof v === 'object' ? toShort(v) : String(v);
+function drawChart(summ, ovKeys, xKey) {
+  const metrics = [...chosenMetrics]; const box = $('#chart');
+  if (!metrics.length) { box.replaceChildren(); $('#legend').replaceChildren(); return; }
+  const xOf = s => xKey === 'point' ? s.point : s.overrides[xKey];
+  const others = ovKeys.filter(k => k !== xKey);
+  const xVals = [...new Set(summ.map(s => fmtOv(xOf(s))))];
+  const numeric = xVals.every(v => v !== '' && !isNaN(Number(v)));
+  const series = new Map();
+  for (const s of summ) for (const m of metrics) { const st = s.stats[m]; if (!st) continue;
+    const key = m.replace('evaluator:', '').replace('baseline:', 'B:') + (others.length ? ' | ' + others.map(k => `${k}=${fmtOv(s.overrides[k])}`).join(' ') : '');
+    if (!series.has(key)) series.set(key, []); series.get(key).push({x: fmtOv(xOf(s)), y: st.mean, e: st.se}); }
+  const W = 640, H = 300, L = 52, R = 40, T = 12, Bm = 40;
+  const ys = [...series.values()].flat().flatMap(p => [p.y - p.e, p.y + p.e]);
+  let y0 = Math.min(...ys), y1 = Math.max(...ys); if (y1 - y0 < 1e-9) { y0 -= .01; y1 += .01; } const pad = (y1 - y0) * .08; y0 -= pad; y1 += pad;
+  const xn = numeric ? xVals.map(Number) : xVals.map((_, i) => i);
+  const x0 = Math.min(...xn), x1 = Math.max(...xn) === x0 ? x0 + 1 : Math.max(...xn);
+  const sx = v => { const t = numeric ? Number(v) : xVals.indexOf(v); return L + (xVals.length === 1 ? (W - L - R) / 2 : (t - x0) / (x1 - x0) * (W - L - R)); };
+  const sy = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - Bm);
+  const NS = 'http://www.w3.org/2000/svg'; const sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const svg = sv('svg', {viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'metric chart'});
+  for (let i = 0; i <= 4; i++) { const v = y0 + (y1 - y0) * i / 4; svg.append(sv('line', {x1: L, x2: W - R, y1: sy(v), y2: sy(v), stroke: 'var(--line)'})); const t = sv('text', {x: L - 6, y: sy(v) + 4, 'text-anchor': 'end'}); t.textContent = v.toFixed(3); svg.append(t); }
+  xVals.forEach(v => { const t = sv('text', {x: sx(v), y: H - Bm + 16, 'text-anchor': 'middle'}); t.textContent = v.length > 14 ? v.slice(0, 13) + '…' : v; svg.append(t); });
+  const xl = sv('text', {x: (L + W - R) / 2, y: H - 6, 'text-anchor': 'middle'}); xl.textContent = xKey; svg.append(xl);
+  const leg = []; let i = 0;
+  for (const [key, pts] of series) { const c = `var(--s${(i++ % 8) + 1})`; pts.sort((a, b) => sx(a.x) - sx(b.x));
+    if (pts.length > 1) svg.append(sv('polyline', {points: pts.map(p => `${sx(p.x)},${sy(p.y)}`).join(' '), fill: 'none', stroke: c, 'stroke-width': 2}));
+    for (const p of pts) { if (p.e > 0) svg.append(sv('line', {x1: sx(p.x), x2: sx(p.x), y1: sy(p.y - p.e), y2: sy(p.y + p.e), stroke: c})); const dot = sv('circle', {cx: sx(p.x), cy: sy(p.y), r: 3.5, fill: c}); const tt = sv('title', {}); tt.textContent = `${key}\n${p.x}: ${p.y.toFixed(4)} ± ${p.e.toFixed(4)}`; dot.append(tt); svg.append(dot); }
+    leg.push(el('span', {}, el('i', {style: `background:${c}`}), key)); }
+  box.replaceChildren(svg); $('#legend').replaceChildren(...leg);
+}
+async function sys() { try { const s = await api('/api/status'); $('#sys').textContent = `load ${s.load_avg.join(' ')} · free ${s.system_available_gb} GB · ${s.cpus} cpus · UI nice ${s.nice}`; } catch (e) {} }
+
+(async () => {
+  CAT = await api('/api/catalog');
+  $('#preset').replaceChildren(el('option', {value: '', text: '(default)'}), ...Object.entries(CAT.presets).map(([k, v]) => el('option', {value: k, text: k, title: v})));
+  await loadPreset('quickstart'); $('#preset').value = 'quickstart';
+  refreshJobs(); sys();
+  setInterval(() => { refreshJobs(); if (current) refreshDetail(); }, 2500);
+  setInterval(sys, 5000);
+})();
+</script>
+</body>
+</html>

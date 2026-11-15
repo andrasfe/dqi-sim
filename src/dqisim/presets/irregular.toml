@@ -1,0 +1,31 @@
+# Irregular ensemble in the spirit of the paper's SA-hostile instances (degree mix is illustrative, not the paper's)
+name = "irregular"
+seeds = [0]
+
+[problem]
+name = "xorsat-irregular"
+n = 600
+m = 1000
+clause_dist = [0.0, 0.0, 0.5, 0.3, 0.2]
+var_dist = [0.0, 0.2, 0.3, 0.2, 0.1, 0.1, 0.1]
+
+[dqi]
+ell = "auto"
+weights = {name = "optimal-aware"}
+decoder = {name = "bp", iters = 50}
+
+[[evaluators]]
+name = "mc"
+samples = 150
+k_points = 16
+
+[[baselines]]
+name = "sa"
+sweeps = 1000
+
+[[baselines]]
+name = "sa-degree"
+sweeps = 1000
+
+[[baselines]]
+name = "walksat"

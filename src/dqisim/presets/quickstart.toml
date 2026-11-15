@@ -1,0 +1,31 @@
+# Quick look: Gallager (k=3, D=6) max-3-XORSAT, BP decoder, analytic + Monte Carlo vs annealing (~10 s)
+name = "quickstart"
+seeds = [0, 1]
+
+[problem]
+name = "xorsat-regular"
+n = 200
+k = 3
+D = 6
+
+[dqi]
+ell = "auto"
+weights = {name = "optimal-ideal"}
+decoder = {name = "bp", iters = 30}
+
+[[evaluators]]
+name = "semicircle"
+
+[[evaluators]]
+name = "ideal"
+
+[[evaluators]]
+name = "mc"
+samples = 200
+
+[[baselines]]
+name = "sa"
+sweeps = 300
+
+[[baselines]]
+name = "prange"

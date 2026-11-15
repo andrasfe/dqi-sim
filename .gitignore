@@ -1,0 +1,9 @@
+.venv/
+results/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+*.nbi
+*.nbc
+.DS_Store
+.playwright-mcp/

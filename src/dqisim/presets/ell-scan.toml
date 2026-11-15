@@ -1,0 +1,25 @@
+# How far past the decoder's radius should ℓ go? Scan ℓ/m with paper weights vs decoder-aware weights
+name = "ell-scan"
+seeds = [0]
+
+[problem]
+name = "xorsat-regular"
+n = 300
+k = 3
+D = 6
+
+[dqi]
+ell = 0.05
+weights = {name = "optimal-ideal"}
+decoder = {name = "bp", iters = 40}
+
+[[evaluators]]
+name = "semicircle"
+
+[[evaluators]]
+name = "mc"
+samples = 150
+k_points = 16
+
+[sweep]
+"dqi.ell" = [0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.20]
