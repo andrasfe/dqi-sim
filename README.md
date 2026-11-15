@@ -42,7 +42,7 @@ uv venv -p 3.12 .venv && uv pip install --python .venv/bin/python -e '.[test]'
 | stage | components (`dqisim list`) |
 |---|---|
 | problem | `xorsat-random`, `xorsat-regular` (Gallager k,D), `xorsat-irregular` (degree distributions), `xorsat-file`; RHS `v` = random / planted+noise / ones (MaxCut) |
-| weights P(f) | `optimal-ideal` (paper), `optimal-aware` (maximises the measured F,G), `product` (Gibbs-like Π(1+t f_i)), `single`, `uniform`, `custom` |
+| weights P(f) | `optimal-ideal` (paper), `optimal-aware` (maximises the measured F,G subject to P_succ ≥ `min_p_succ`, default 0.5), `product` (Gibbs-like Π(1+t f_i)), `single`, `uniform`, `custom` |
 | decoder | `bp` (min-sum / sum-product), `bposd` (BP + OSD-0), `bitflip`, `ml` (exact coset leader up to t) |
 | evaluator | `semicircle`, `ideal`, `mc`, `exact` (+ dense 2ⁿ distribution and sampling) |
 | baseline | `sa`, `sa-degree`, `walksat`, `prange`, `random`, `exact` (all 2ⁿ by one FWHT) |
@@ -63,7 +63,8 @@ dqisim report results/<run-dir> --metric p_succ
 
 Sweeps take any dotted path and form a Cartesian product. Component values are written as
 `name:key=val,...`; on the command line, separate them with `|` (`--sweep 'dqi.decoder=bp:iters=10|bposd'`).
-Sweep points that share a problem and seed reuse the same instance and baseline results, so
+Sweep points that share a problem and seed reuse the same instance, the same baseline results,
+the same auto-ℓ probe and the same Monte Carlo draws (common random numbers), so
 comparisons between variants are paired.
 
 ### Adding your own component
@@ -117,7 +118,7 @@ Every run, including each UI job (a separate process), gets the following:
 You can change the limits under `[resources]` in a spec, with `--memory-gb/--walltime/--workers/--threads`,
 or in the UI's Resources card. `dqisim status` shows what the guard sees.
 
-## Validation (`pytest`, 51 tests)
+## Validation (`pytest`, 53 tests)
 
 - The semicircle law reproduces the paper's 0.7179 (OPI, n/p = 1/10). The finite-m
   eigenvalue converges to the semicircle for r/p ∈ {0.3, 0.5, 0.7}.
@@ -132,6 +133,19 @@ or in the UI's Resources card. `dqisim status` shows what the guard sees.
   disk cap, and the watchdog stopping a runaway allocation.
 - The CLI end to end, plugins, and the UI end to end (job submission, Host and Content-Type
   guards).
+
+## What the bundled presets show (first runs, Apple M-series, 1 core at nice 19)
+
+| preset | runtime / peak RSS | result |
+|---|---|---|
+| `small-exact` (n=18, ℓ=3, 3 seeds) | 25 s / 170 MB | exact satisfied fraction: ML 0.689, BP-OSD 0.682, BP 0.671, bit flipping 0.628; `mc` within 0.002 of `exact` for every decoder; true optimum 0.870 |
+| `ell-scan` (Gallager 3,6, m=600, BP, paper weights) | 13 min / 186 MB | peaks at 0.739 near ℓ/m ≈ 0.08 (P_succ 0.73), then collapses (P_succ 0.06 → 1e-4) while the semicircle keeps climbing to 0.90; SA 0.857 |
+| `weights-shootout` (ℓ/m = 0.15) | 4.5 min / 187 MB | paper weights 0.667 at P_succ ≈ 0; decoder-aware 0.744 at P_succ 0.67 |
+| `decoder-shootout` (m=800, ℓ/m = 0.12) | 5.3 min / 206 MB | BP ≈ BP-OSD ≈ 0.746 > bit flipping 0.682; SA 0.860, WalkSAT 0.805 |
+| `irregular` (n=600, m=1000) | 24 s / 230 MB | DQI+BP 0.771 vs SA 0.869 and degree-aware SA 0.884 |
+
+On these generic ensembles, DQI with classical decoders stays well below simulated annealing.
+That matches the paper's own caution. The tool is for finding where that changes.
 
 ## Caveats
 

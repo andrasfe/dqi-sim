@@ -78,7 +78,8 @@ def run_group(task: dict, emit=None) -> list[dict]:
                "evaluators": {}, "baselines": {}, "errors": []}
         dqi = spec["dqi"]
         try:
-            ctx = Context(inst, np.random.default_rng([seed, 1, pi]), dqi.get("ell", "auto"),
+            ctx = Context(inst, np.random.default_rng([seed, 1]),  # common random numbers across sweep points
+                          dqi.get("ell", "auto"),
                           registry.build("weights", dqi["weights"]), dqi["decoder"],
                           bool(dqi.get("postselect", True)), float(dqi.get("ell_auto_eps", 0.1)), probe_seed=seed)
             for label, ev in label_components(spec.get("evaluators", [])):

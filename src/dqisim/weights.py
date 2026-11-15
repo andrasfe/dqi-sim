@@ -117,15 +117,37 @@ class OptimalIdeal(_Weights):
         return self._norm(ideal_top(m, ell)[1])
 
 
-@register("weights", "optimal-aware", "Decoder-aware: maximise w^T F w / w^T G w for the evaluator's measured response "
-                                      "(falls back to optimal-ideal when no response is available)")
+@register("weights", "optimal-aware", "Decoder-aware: maximise w^T F w / w^T G w for the evaluator's measured response, "
+                                      "keeping post-selection success ≥ min_p_succ by truncating the degree "
+                                      "(falls back to optimal-ideal when no response is available)",
+          P("min_p_succ", float, 0.5, "floor on post-selection success (0 = unconstrained ratio maximum)", min=0, max=1))
 class OptimalAware(_Weights):
     needs_response = True
+
+    def __init__(self, min_p_succ=0.5):
+        self.min_p_succ = min_p_succ
+
+    def _best(self, F, G, K):
+        w = np.zeros(F.shape[0])
+        w[: K + 1] = top_generalized(F[: K + 1, : K + 1], G[: K + 1, : K + 1])
+        return w
 
     def choose(self, m, ell, F=None, G=None):
         if F is None or G is None:
             return OptimalIdeal().choose(m, ell)
-        return top_generalized(F, G)
+        w = self._best(F, G, ell)
+        if self.min_p_succ <= 0 or float(w @ G @ w) >= self.min_p_succ:
+            return w
+        lo, hi = 1, ell  # largest truncation degree K whose optimum meets the floor
+        best = self._best(F, G, 1)
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            cand = self._best(F, G, mid)
+            if float(cand @ G @ cand) >= self.min_p_succ:
+                best, lo = cand, mid + 1
+            else:
+                hi = mid - 1
+        return best
 
 
 @register("weights", "product", "Gibbs-like P(f) = Π_i (1 + t f_i) truncated at degree ℓ: w_k ∝ t^k sqrt(C(m,k))",

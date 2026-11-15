@@ -47,3 +47,11 @@ def test_hopeless_postselection_is_flagged():
     inst = instance(n=200, k=3, D=6)
     r = registry.build("evaluator", {"name": "mc", "samples": 60, "k_points": 8}).run(ctx(inst, 0.2, "bitflip"))
     assert r["p_succ"] < 1e-3 and "warning" in r and r["repetitions"] > 1e3
+
+
+def test_aware_weights_respect_success_floor():
+    inst = instance(n=200, k=3, D=6)
+    for floor in (0.2, 0.5):
+        r = registry.build("evaluator", {"name": "mc", "samples": 100, "k_points": 10}).run(
+            ctx(inst, 0.15, "bp", weights={"name": "optimal-aware", "min_p_succ": floor}))
+        assert r["p_succ"] >= floor - 1e-9
